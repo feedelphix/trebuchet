@@ -88,6 +88,8 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
+
 /**
  * Various utilities shared amongst the Launcher's classes.
  */
@@ -118,6 +120,10 @@ public final class Utilities {
 
     public static final boolean ATLEAST_OREO =
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+
+    private static final long WAIT_BEFORE_RESTART = 250;
+
+    public static final String ICON_SIZE = "pref_icon_size";
 
     /**
      * Set on a motion event dispatched from the nav bar. See {@link MotionEvent#setEdgeFlags(int)}.
@@ -694,5 +700,41 @@ public final class Utilities {
     public static boolean isWorkspaceEditAllowed(Context context) {
         SharedPreferences prefs = getPrefs(context.getApplicationContext());
         return prefs.getBoolean(InvariantDeviceProfile.KEY_WORKSPACE_EDIT, true);
+    }
+
+    public static float getIconSizeModifier(Context context) {
+        String saved = getPrefs(context).getString(ICON_SIZE, "average");
+        float offset;
+        switch (saved) {
+            case "extrasmall":
+                offset = 0.75F;
+                break;
+            case "small":
+                offset = 0.90F;
+                break;
+            case "average":
+                offset = 1.00F;
+                break;
+            case "large":
+                offset = 1.10F;
+                break;
+            case "extralarge":
+                offset = 1.25F;
+                break;
+            default:
+                offset = 1.00F;
+                break;
+        }
+        return offset;
+    }
+
+    public static void restart(final Context context) {
+        MODEL_EXECUTOR.execute(() -> {
+            try {
+                Thread.sleep(WAIT_BEFORE_RESTART);
+            } catch (Exception ignored) {
+            }
+            android.os.Process.killProcess(android.os.Process.myPid());
+        });
     }
 }
